@@ -1511,9 +1511,9 @@ button{font:inherit}
     let w = 0, h = 0, dpr;
     let pts = [];
     const seedPts = () => {
-      pts = Array.from({length: 80}, () => ({
+      pts = Array.from({length: 110}, () => ({
         x: Math.random()*w, y: Math.random()*h,
-        vx: (Math.random()-.5)*.25, vy: (Math.random()-.5)*.25,
+        vx: (Math.random()-.5)*.85, vy: (Math.random()-.5)*.85,
         r: Math.random()*1.2 + .3
       }));
     };
