@@ -167,6 +167,13 @@ button{font:inherit}
   overflow:visible;
   border-bottom:1px solid var(--line);
 }
+.bg-swarm{
+  position:fixed;
+  inset:0;
+  width:100vw; height:100vh;
+  z-index:-1; opacity:.42;
+  pointer-events:none;
+}
 .hero-canvas{
   position:absolute;
   top:0; left:0;
@@ -760,6 +767,7 @@ button{font:inherit}
 <body>
 
 <!-- ================= GRID + CURSOR LAYERS ================= -->
+<canvas id="bg-swarm" class="bg-swarm" aria-hidden="true"></canvas>
 <div class="grid-overlay" aria-hidden="true"></div>
 <div class="noise" aria-hidden="true"></div>
 <div class="cursor" aria-hidden="true"></div>
@@ -1504,37 +1512,25 @@ button{font:inherit}
     o.observe(el);
   });
 
-  /* ---------- HERO CANVAS · radial grid + points ---------- */
+  /* ---------- HERO CANVAS · radial rings + sweep (hero section only) ---------- */
   const hc = document.getElementById('hero-canvas');
   if (hc){
     const ctx = hc.getContext('2d');
-    let w = 0, h = 0, dpr;
-    let pts = [];
-    const seedPts = () => {
-      pts = Array.from({length: 110}, () => ({
-        x: Math.random()*w, y: Math.random()*h,
-        vx: (Math.random()-.5)*.85, vy: (Math.random()-.5)*.85,
-        r: Math.random()*1.2 + .3
-      }));
-    };
+    let w=0, h=0, dpr;
     const resize = () => {
       const nw = hc.clientWidth, nh = hc.clientHeight;
       if (!nw || !nh) return;
-      const spawn = !w || !h; // first valid measure → seed now
       dpr = Math.min(2, devicePixelRatio || 1);
       w = nw; h = nh;
       hc.width = w*dpr; hc.height = h*dpr;
       ctx.setTransform(dpr,0,0,dpr,0,0);
-      if (spawn) seedPts();
     };
     resize();
     addEventListener('resize', resize);
     addEventListener('load', resize);
     if ('ResizeObserver' in window) new ResizeObserver(resize).observe(hc);
 
-    let t = 0;
-    let heroRunning = false;
-    let lastFrame = 0;
+    let t = 0, heroRunning = false, lastFrame = 0;
     const FRAME_MS = 1000/30;
     const loop = (now) => {
       if (!heroRunning) return;
@@ -1543,8 +1539,6 @@ button{font:inherit}
       lastFrame = now;
       t += 0.01;
       ctx.clearRect(0,0,w,h);
-
-      // radial sweep
       const cxh = w*0.5, cyh = h*0.55;
       const maxR = Math.hypot(w,h)*0.6;
       for (let i=1;i<=6;i++){
@@ -1554,7 +1548,6 @@ button{font:inherit}
         ctx.lineWidth = 1;
         ctx.stroke();
       }
-      // sweep arc — glow trails BEHIND the sweep line (counter-clockwise of current angle)
       const sweep = t*2 % (Math.PI*2);
       const grd = ctx.createConicGradient ? ctx.createConicGradient(sweep, cxh, cyh) : null;
       if (grd){
@@ -1564,36 +1557,8 @@ button{font:inherit}
         ctx.fillStyle = grd;
         ctx.beginPath(); ctx.arc(cxh,cyh, maxR, 0, Math.PI*2); ctx.fill();
       }
-
-      // points
-      pts.forEach(p => {
-        p.x += p.vx; p.y += p.vy;
-        if (p.x<0||p.x>w) p.vx*=-1;
-        if (p.y<0||p.y>h) p.vy*=-1;
-        ctx.beginPath();
-        ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
-        ctx.fillStyle = 'rgba(245,245,244,0.35)';
-        ctx.fill();
-      });
-
-      // connections
-      for (let i=0;i<pts.length;i++){
-        for (let j=i+1;j<pts.length;j++){
-          const dx=pts[i].x-pts[j].x, dy=pts[i].y-pts[j].y;
-          const d2 = dx*dx+dy*dy;
-          if (d2 < 140*140){
-            const a = 1 - Math.sqrt(d2)/140;
-            ctx.strokeStyle = `rgba(245,245,244,${a*0.08})`;
-            ctx.lineWidth = 1;
-            ctx.beginPath();
-            ctx.moveTo(pts[i].x,pts[i].y);
-            ctx.lineTo(pts[j].x,pts[j].y);
-            ctx.stroke();
-          }
-        }
-      }
     };
-    // pause hero loop when scrolled past the hero section
+    // pause hero radar when scrolled past the hero section
     const heroSec = document.querySelector('.hero');
     if (heroSec && 'IntersectionObserver' in window){
       const heroIO = new IntersectionObserver(es => {
@@ -1608,6 +1573,87 @@ button{font:inherit}
       heroRunning = true;
       requestAnimationFrame(loop);
     }
+  }
+
+  /* ---------- BACKGROUND SWARM · points + links, full viewport ---------- */
+  const bs = document.getElementById('bg-swarm');
+  if (bs){
+    const bctx = bs.getContext('2d');
+    let bw=0, bh=0, bdpr;
+    let bpts = [];
+    const seedBpts = () => {
+      bpts = Array.from({length: 120}, () => ({
+        x: Math.random()*bw, y: Math.random()*bh,
+        vx: (Math.random()-.5)*.85, vy: (Math.random()-.5)*.85,
+        r: Math.random()*1.2 + .3
+      }));
+    };
+    const bresize = () => {
+      const nw = bs.clientWidth, nh = bs.clientHeight;
+      if (!nw || !nh) return;
+      const spawn = !bw || !bh;
+      bdpr = Math.min(2, devicePixelRatio || 1);
+      bw = nw; bh = nh;
+      bs.width = bw*bdpr; bs.height = bh*bdpr;
+      bctx.setTransform(bdpr,0,0,bdpr,0,0);
+      if (spawn) seedBpts();
+      else {
+        // keep particles inside new bounds
+        bpts.forEach(p => {
+          if (p.x > bw) p.x = bw - 1;
+          if (p.y > bh) p.y = bh - 1;
+        });
+      }
+    };
+    bresize();
+    addEventListener('resize', bresize);
+    addEventListener('load', bresize);
+    if ('ResizeObserver' in window) new ResizeObserver(bresize).observe(bs);
+
+    let bgRunning = false, bgLast = 0;
+    const BG_FRAME_MS = 1000/30;
+    const LINK_D2 = 140*140;
+    const bgLoop = (now) => {
+      if (!bgRunning) return;
+      requestAnimationFrame(bgLoop);
+      if (now - bgLast < BG_FRAME_MS) return;
+      bgLast = now;
+      bctx.clearRect(0,0,bw,bh);
+      bpts.forEach(p => {
+        p.x += p.vx; p.y += p.vy;
+        if (p.x<0||p.x>bw) p.vx*=-1;
+        if (p.y<0||p.y>bh) p.vy*=-1;
+        bctx.beginPath();
+        bctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+        bctx.fillStyle = 'rgba(245,245,244,0.35)';
+        bctx.fill();
+      });
+      for (let i=0;i<bpts.length;i++){
+        for (let j=i+1;j<bpts.length;j++){
+          const dx=bpts[i].x-bpts[j].x, dy=bpts[i].y-bpts[j].y;
+          const d2 = dx*dx+dy*dy;
+          if (d2 < LINK_D2){
+            const a = 1 - Math.sqrt(d2)/140;
+            bctx.strokeStyle = `rgba(245,245,244,${a*0.08})`;
+            bctx.lineWidth = 1;
+            bctx.beginPath();
+            bctx.moveTo(bpts[i].x,bpts[i].y);
+            bctx.lineTo(bpts[j].x,bpts[j].y);
+            bctx.stroke();
+          }
+        }
+      }
+    };
+    const startBg = () => {
+      if (reduce || bgRunning) return;
+      bgRunning = true;
+      requestAnimationFrame(bgLoop);
+    };
+    const stopBg = () => { bgRunning = false; };
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) stopBg(); else startBg();
+    });
+    if (!document.hidden) startBg();
   }
 
   /* ---------- PROJECT VIDEOS (real media, when available) ---------- */
