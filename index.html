@@ -793,8 +793,9 @@ button{font:inherit}
 </header>
 
 <!-- ================= HERO ================= -->
+   <div class="hero-corner tl" aria-hidden="true"></div>
 <section id="top" class="hero">
-  <div class="hero-corner tl" aria-hidden="true"></div>
+
   <div class="hero-corner tr" aria-hidden="true"></div>
   <div class="hero-corner bl" aria-hidden="true"></div>
   <div class="hero-corner br" aria-hidden="true"></div>
@@ -1511,7 +1512,7 @@ button{font:inherit}
     let w = 0, h = 0, dpr;
     let pts = [];
     const seedPts = () => {
-      pts = Array.from({length: 90}, () => ({
+      pts = Array.from({length: 55}, () => ({
         x: Math.random()*w, y: Math.random()*h,
         vx: (Math.random()-.5)*.25, vy: (Math.random()-.5)*.25,
         r: Math.random()*1.2 + .3
@@ -1533,8 +1534,15 @@ button{font:inherit}
     if ('ResizeObserver' in window) new ResizeObserver(resize).observe(hc);
 
     let t = 0;
-    const loop = () => {
-      t += 0.005;
+    let heroRunning = false;
+    let lastFrame = 0;
+    const FRAME_MS = 1000/30;
+    const loop = (now) => {
+      if (!heroRunning) return;
+      requestAnimationFrame(loop);
+      if (now - lastFrame < FRAME_MS) return;
+      lastFrame = now;
+      t += 0.01;
       ctx.clearRect(0,0,w,h);
 
       // radial sweep
@@ -1585,10 +1593,22 @@ button{font:inherit}
           }
         }
       }
-
-      requestAnimationFrame(loop);
     };
-    if (!reduce) loop();
+    // pause hero loop when scrolled past the hero section
+    const heroSec = document.querySelector('.hero');
+    if (heroSec && 'IntersectionObserver' in window){
+      const heroIO = new IntersectionObserver(es => {
+        es.forEach(e => {
+          const wasRunning = heroRunning;
+          heroRunning = e.isIntersecting && !reduce;
+          if (heroRunning && !wasRunning) requestAnimationFrame(loop);
+        });
+      }, { threshold: 0 });
+      heroIO.observe(heroSec);
+    } else if (!reduce) {
+      heroRunning = true;
+      requestAnimationFrame(loop);
+    }
   }
 
   /* ---------- PROJECT VIDEOS (real media, when available) ---------- */
@@ -1647,7 +1667,7 @@ button{font:inherit}
     const io = new IntersectionObserver(es => {
       es.forEach(e => {
         running = e.isIntersecting;
-        if (running && !reduce){ resize(); loop(); }
+        if (running && !reduce){ resize(); requestAnimationFrame(loop); }
       });
     }, { threshold: 0.1 });
     io.observe(canvas);
@@ -2001,11 +2021,15 @@ button{font:inherit}
 
     const drawers = { radar:drawRadar, slam:drawSlam, wave:drawWave, facade:drawFacade, rag:drawRag, vector:drawVector };
 
-    function loop(){
+    let projLast = 0;
+    const PROJ_FRAME_MS = 1000/30;
+    function loop(now){
       if (!running) return;
-      t += 0.02;
-      (drawers[kind] || drawRadar)();
       requestAnimationFrame(loop);
+      if (now - projLast < PROJ_FRAME_MS) return;
+      projLast = now;
+      t += 0.04;
+      (drawers[kind] || drawRadar)();
     }
     // draw one static frame always so non-in-view isn't black
     resize();
