@@ -1,0 +1,12 @@
+.git/
+.wrangler/
+.claude/
+.gitignore
+.assetsignore
+wrangler.jsonc
+dev.sh
+.DS_Store
+.env
+.env.local
+*.log
+media/README.md
