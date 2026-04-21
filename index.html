@@ -1020,8 +1020,8 @@ button{font:inherit}
   <!-- PROJECT 03 -->
   <article class="project" data-proj="03">
     <div class="project-media">
-      <div class="media-frame" data-media="sim">
-        <canvas class="proj-canvas" data-canvas="sim"></canvas>
+      <div class="media-frame" data-media="facade">
+        <canvas class="proj-canvas" data-canvas="facade"></canvas>
         <div class="media-hud">
           <span>SCAN · 03</span>
           <span>FACADE</span>
@@ -1055,8 +1055,8 @@ button{font:inherit}
   <!-- PROJECT 04 -->
   <article class="project reverse" data-proj="04">
     <div class="project-media">
-      <div class="media-frame" data-media="arm">
-        <canvas class="proj-canvas" data-canvas="arm"></canvas>
+      <div class="media-frame" data-media="rag">
+        <canvas class="proj-canvas" data-canvas="rag"></canvas>
         <div class="media-hud">
           <span>ESG · 04</span>
           <span>RAG</span>
@@ -1132,8 +1132,8 @@ button{font:inherit}
   <!-- PROJECT 06 -->
   <article class="project reverse" data-proj="06">
     <div class="project-media">
-      <div class="media-frame" data-media="board">
-        <canvas class="proj-canvas" data-canvas="board"></canvas>
+      <div class="media-frame" data-media="vector">
+        <canvas class="proj-canvas" data-canvas="vector"></canvas>
         <div class="media-hud">
           <span>APP · 06</span>
           <span>QDRANT</span>
@@ -1686,38 +1686,76 @@ button{font:inherit}
       });
     }
 
-    function drawArm(){
+    function drawRag(){
       ctx.clearRect(0,0,w,h);
-      const cx=w*0.5, cy=h*0.9;
-      // ground
-      ctx.strokeStyle = FG+'0.1)';
-      ctx.beginPath(); ctx.moveTo(0,cy); ctx.lineTo(w,cy); ctx.stroke();
-      // arm segments
-      const L1 = Math.min(w,h)*0.28, L2 = Math.min(w,h)*0.24, L3 = Math.min(w,h)*0.12;
-      const a1 = -Math.PI/2 + Math.sin(t*0.8)*0.6;
-      const a2 = a1 + Math.sin(t*1.1)*0.7 - 0.4;
-      const a3 = a2 + Math.sin(t*1.4)*0.5;
-      const p1 = { x: cx + Math.cos(a1)*L1, y: cy + Math.sin(a1)*L1 };
-      const p2 = { x: p1.x + Math.cos(a2)*L2, y: p1.y + Math.sin(a2)*L2 };
-      const p3 = { x: p2.x + Math.cos(a3)*L3, y: p2.y + Math.sin(a3)*L3 };
-      const seg = (A,B) => {
-        ctx.strokeStyle = FG+'0.7)'; ctx.lineWidth=6;
-        ctx.lineCap='round';
-        ctx.beginPath(); ctx.moveTo(A.x,A.y); ctx.lineTo(B.x,B.y); ctx.stroke();
-        ctx.strokeStyle = AMBER+'0.8)'; ctx.lineWidth=1;
-        ctx.beginPath(); ctx.moveTo(A.x,A.y); ctx.lineTo(B.x,B.y); ctx.stroke();
-      };
-      seg({x:cx,y:cy}, p1); seg(p1,p2); seg(p2,p3);
-      // joints
-      [{x:cx,y:cy}, p1, p2, p3].forEach(p => {
-        ctx.fillStyle = '#0E1014'; ctx.beginPath(); ctx.arc(p.x,p.y,5,0,Math.PI*2); ctx.fill();
-        ctx.strokeStyle = AMBER+'1)'; ctx.lineWidth=1.2; ctx.stroke();
+      // document grid — each a little page with chunk lines
+      const cols = 6, rows = 4;
+      const padX = w*0.06, padY = h*0.14;
+      const cw = (w - padX*2) / cols, ch = (h - padY*2) / rows;
+      const docW = cw*0.62, docH = ch*0.72;
+      const docs = [];
+      for (let r=0;r<rows;r++){
+        for (let c=0;c<cols;c++){
+          docs.push({
+            x: padX + c*cw + (cw-docW)/2,
+            y: padY + r*ch + (ch-docH)/2,
+            idx: r*cols + c
+          });
+        }
+      }
+      // query origin (moves slowly, simulates new queries)
+      const qx = w*0.5 + Math.cos(t*0.35)*w*0.18;
+      const qy = h*0.92;
+      // compute similarity (pseudo) for each doc — cycles through top-k picks
+      const k = 5;
+      const scored = docs.map(d => {
+        const cx = d.x + docW/2, cy = d.y + docH/2;
+        const dist = Math.hypot(cx - qx, cy - qy);
+        const phase = Math.sin(t*0.6 + d.idx*0.5) * 0.4 + 0.6;
+        return { ...d, cx, cy, score: 1/(dist+1) * phase };
+      }).sort((a,b) => b.score - a.score);
+      const top = new Set(scored.slice(0, k).map(d => d.idx));
+
+      // doc rectangles
+      docs.forEach(d => {
+        const isTop = top.has(d.idx);
+        ctx.strokeStyle = isTop ? AMBER+'0.9)' : FG+'0.22)';
+        ctx.lineWidth = isTop ? 1.2 : 1;
+        ctx.strokeRect(d.x, d.y, docW, docH);
+        ctx.fillStyle = isTop ? AMBER+'0.08)' : FG+'0.03)';
+        ctx.fillRect(d.x, d.y, docW, docH);
+        // chunk lines
+        const lines = 4;
+        for (let i=0;i<lines;i++){
+          const ly = d.y + (docH/(lines+1))*(i+1);
+          const lw = docW * (0.45 + ((d.idx*7 + i*3)%5)*0.1);
+          ctx.strokeStyle = isTop ? AMBER+'0.55)' : FG+'0.15)';
+          ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(d.x+4, ly); ctx.lineTo(d.x+4+lw, ly); ctx.stroke();
+        }
       });
-      // target cross
-      const tgt = { x: cx + Math.cos(t*0.4)*w*0.25, y: h*0.3 + Math.sin(t*0.6)*h*0.1};
-      ctx.strokeStyle = AMBER+'0.5)';
-      ctx.beginPath(); ctx.moveTo(tgt.x-10,tgt.y); ctx.lineTo(tgt.x+10,tgt.y);
-      ctx.moveTo(tgt.x,tgt.y-10); ctx.lineTo(tgt.x,tgt.y+10); ctx.stroke();
+
+      // similarity lines to top-k
+      scored.slice(0, k).forEach((d,i) => {
+        const alpha = (0.75 - i*0.12);
+        ctx.strokeStyle = AMBER + alpha.toFixed(2) + ')';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([3, 3]);
+        ctx.beginPath(); ctx.moveTo(qx, qy); ctx.lineTo(d.cx, d.cy); ctx.stroke();
+        ctx.setLineDash([]);
+      });
+
+      // query pulse
+      const pulse = (Math.sin(t*3)+1)/2;
+      ctx.strokeStyle = AMBER + (0.35 + pulse*0.3).toFixed(2) + ')';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath(); ctx.arc(qx, qy, 8 + pulse*6, 0, Math.PI*2); ctx.stroke();
+      ctx.fillStyle = AMBER+'0.95)';
+      ctx.beginPath(); ctx.arc(qx, qy, 3, 0, Math.PI*2); ctx.fill();
+      // query label
+      ctx.fillStyle = FG+'0.4)';
+      ctx.font = '9px "Geist Mono", monospace';
+      ctx.fillText('QUERY', qx-15, qy+20);
     }
 
     function drawSlam(){
@@ -1769,79 +1807,199 @@ button{font:inherit}
       ctx.stroke();
     }
 
-    function drawSim(){
+    function drawFacade(){
       ctx.clearRect(0,0,w,h);
-      const cx=w*0.5, cy=h*0.5;
-      // grid
-      ctx.strokeStyle = FG+'0.05)';
-      for (let i=0;i<10;i++){
-        ctx.beginPath(); ctx.moveTo(0, (h/10)*i); ctx.lineTo(w, (h/10)*i); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo((w/10)*i, 0); ctx.lineTo((w/10)*i, h); ctx.stroke();
-      }
-      // swarm
-      const N = 40;
-      for (let i=0;i<N;i++){
-        const a = (i/N)*Math.PI*2 + t*0.3;
-        const r = 60 + Math.sin(t*0.8 + i*0.6)*40 + (i%5)*8;
-        const x = cx + Math.cos(a)*r;
-        const y = cy + Math.sin(a)*r*0.7;
-        ctx.fillStyle = (i%7===0) ? AMBER+'0.95)' : FG+'0.7)';
-        ctx.beginPath(); ctx.arc(x,y,2,0,Math.PI*2); ctx.fill();
-        // links
-        if (i>0){
-          const a2 = ((i-1)/N)*Math.PI*2 + t*0.3;
-          const r2 = 60 + Math.sin(t*0.8 + (i-1)*0.6)*40 + ((i-1)%5)*8;
-          const x2 = cx + Math.cos(a2)*r2, y2 = cy + Math.sin(a2)*r2*0.7;
-          ctx.strokeStyle = FG+'0.08)';
-          ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x2,y2); ctx.stroke();
+      // facade grid — rows of windows on a building
+      const cols = 7, rows = 5;
+      const fx = w*0.08, fy = h*0.22, fw = w*0.84, fh = h*0.68;
+      const cw = fw/cols, ch = fh/rows;
+      // building outline
+      ctx.strokeStyle = FG+'0.22)';
+      ctx.strokeRect(fx, fy, fw, fh);
+      // windows
+      const pad = Math.min(cw,ch)*0.18;
+      const windows = [];
+      for (let r=0;r<rows;r++){
+        for (let c=0;c<cols;c++){
+          const x = fx + c*cw + pad;
+          const y = fy + r*ch + pad;
+          const ww = cw - pad*2, wh = ch - pad*2;
+          windows.push({ x, y, w: ww, h: wh, idx: r*cols+c });
+          ctx.fillStyle = FG+'0.04)';
+          ctx.fillRect(x, y, ww, wh);
+          ctx.strokeStyle = FG+'0.18)';
+          ctx.lineWidth = 1;
+          ctx.strokeRect(x, y, ww, wh);
+          // mullion
+          ctx.beginPath();
+          ctx.moveTo(x + ww/2, y); ctx.lineTo(x + ww/2, y + wh);
+          ctx.moveTo(x, y + wh/2); ctx.lineTo(x + ww, y + wh/2);
+          ctx.strokeStyle = FG+'0.1)';
+          ctx.stroke();
         }
       }
+      // drone sweeping across top
+      const dx = fx + ((Math.sin(t*0.5)+1)/2) * fw;
+      const dy = fy - h*0.1;
+      ctx.fillStyle = AMBER+'0.95)';
+      ctx.beginPath(); ctx.arc(dx, dy, 3, 0, Math.PI*2); ctx.fill();
+      ctx.strokeStyle = AMBER+'0.4)';
+      ctx.beginPath(); ctx.arc(dx, dy, 6, 0, Math.PI*2); ctx.stroke();
+      // scan cone fanning down
+      const coneAng = 0.35;
+      const coneR = fh + h*0.12;
+      ctx.beginPath();
+      ctx.moveTo(dx, dy);
+      ctx.lineTo(dx - Math.sin(coneAng)*coneR, dy + Math.cos(coneAng)*coneR);
+      ctx.lineTo(dx + Math.sin(coneAng)*coneR, dy + Math.cos(coneAng)*coneR);
+      ctx.closePath();
+      ctx.fillStyle = AMBER+'0.05)';
+      ctx.fill();
+      ctx.strokeStyle = AMBER+'0.25)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      // detection boxes on windows within cone
+      windows.forEach(win => {
+        const cx = win.x + win.w/2, cy = win.y + win.h/2;
+        const inCone = Math.abs(cx - dx) < (cy - dy) * Math.tan(coneAng);
+        if (!inCone) return;
+        const phase = Math.sin(t*1.2 + win.idx*0.4);
+        if (phase < 0) return;
+        const fade = Math.min(1, phase*1.5);
+        ctx.strokeStyle = AMBER + (0.85*fade).toFixed(2) + ')';
+        ctx.lineWidth = 1.5;
+        const m = 2;
+        ctx.strokeRect(win.x - m, win.y - m, win.w + m*2, win.h + m*2);
+        // corner ticks
+        const tk = 4;
+        ctx.beginPath();
+        [[win.x-m, win.y-m, 1, 1], [win.x+win.w+m, win.y-m, -1, 1],
+         [win.x-m, win.y+win.h+m, 1, -1], [win.x+win.w+m, win.y+win.h+m, -1, -1]].forEach(([cx,cy,sx,sy]) => {
+          ctx.moveTo(cx, cy); ctx.lineTo(cx + sx*tk, cy);
+          ctx.moveTo(cx, cy); ctx.lineTo(cx, cy + sy*tk);
+        });
+        ctx.stroke();
+      });
+      // label
+      ctx.fillStyle = FG+'0.35)';
+      ctx.font = '9px "Geist Mono", monospace';
+      ctx.fillText('FACADE · SEG', fx, fy - 6);
     }
 
-    function drawBoard(){
+    // deterministic point cloud for drawVector — spread across embedding space
+    const vecPts = (() => {
+      const pts = [];
+      let s = 12345;
+      const rand = () => { s = (s*9301 + 49297) % 233280; return s / 233280; };
+      for (let i=0;i<140;i++){
+        pts.push({ u: rand(), v: rand(), tag: rand() > 0.55 ? 'a' : 'b' });
+      }
+      return pts;
+    })();
+
+    function drawVector(){
       ctx.clearRect(0,0,w,h);
-      // pcb bg
-      ctx.fillStyle = 'rgba(20,30,25,0.4)';
-      ctx.fillRect(0,0,w,h);
-      // traces
-      ctx.strokeStyle = AMBER+'0.45)'; ctx.lineWidth=1;
-      const seed = [11,7,19,3,13,23,5,17];
-      for (let i=0;i<18;i++){
-        const y = (h/20) * (i+1);
+      const padX = w*0.1, padY = h*0.14;
+      const pw = w - padX*2, ph = h - padY*2;
+      // axes
+      ctx.strokeStyle = FG+'0.15)';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(padX, padY, pw, ph);
+      // faint grid
+      ctx.strokeStyle = FG+'0.06)';
+      for (let i=1;i<8;i++){
         ctx.beginPath();
-        ctx.moveTo(0, y);
-        let x = 0;
-        for (let k=0;k<6;k++){
-          const nx = x + (w/6) * (0.7 + (seed[(i+k)%seed.length]%3)*0.1);
-          const ny = y + (seed[(i+k*2)%seed.length] % 2 === 0 ? 10 : -10);
-          ctx.lineTo(nx, y);
-          ctx.lineTo(nx, ny);
-          x = nx;
-        }
-        ctx.lineTo(w, y);
+        ctx.moveTo(padX + (pw/8)*i, padY); ctx.lineTo(padX + (pw/8)*i, padY + ph);
+        ctx.moveTo(padX, padY + (ph/8)*i); ctx.lineTo(padX + pw, padY + (ph/8)*i);
         ctx.stroke();
       }
-      // pads
-      for (let i=0;i<30;i++){
-        const x = (i*41)%w, y = ((i*37)%h);
-        ctx.fillStyle = AMBER+'0.7)';
-        ctx.fillRect(x,y,3,3);
-      }
-      // chip
-      const cx=w*0.5, cy=h*0.5, cw=w*0.3, ch=h*0.3;
-      ctx.fillStyle = '#0c0e11';
-      ctx.fillRect(cx-cw/2, cy-ch/2, cw, ch);
-      ctx.strokeStyle = FG+'0.25)'; ctx.strokeRect(cx-cw/2, cy-ch/2, cw, ch);
-      ctx.fillStyle = FG+'0.4)';
-      ctx.font = '10px "Geist Mono", monospace';
-      ctx.fillText('PULSE-IMU  R.C', cx-cw/2+8, cy-ch/2+16);
-      // blinking led
-      const blink = (Math.sin(t*4) > 0) ? 1 : 0.2;
-      ctx.fillStyle = `rgba(230,180,90,${blink})`;
-      ctx.beginPath(); ctx.arc(cx+cw/2-10, cy+ch/2-10, 3, 0, Math.PI*2); ctx.fill();
+      // axis labels
+      ctx.fillStyle = FG+'0.35)';
+      ctx.font = '9px "Geist Mono", monospace';
+      ctx.fillText('emb[0]', padX, padY - 6);
+      ctx.save();
+      ctx.translate(padX - 6, padY + ph);
+      ctx.rotate(-Math.PI/2);
+      ctx.fillText('emb[1]', 0, 0);
+      ctx.restore();
+
+      // filter band: structured filter (e.g., price / travel-time range) excludes outside
+      const bandY0 = padY + ph*0.18;
+      const bandY1 = padY + ph*0.85;
+      ctx.fillStyle = FG+'0.03)';
+      ctx.fillRect(padX, bandY0, pw, bandY1 - bandY0);
+      ctx.strokeStyle = FG+'0.18)';
+      ctx.setLineDash([2, 4]);
+      ctx.beginPath();
+      ctx.moveTo(padX, bandY0); ctx.lineTo(padX + pw, bandY0);
+      ctx.moveTo(padX, bandY1); ctx.lineTo(padX + pw, bandY1);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // query moves through embedding space
+      const qu = 0.5 + Math.cos(t*0.35)*0.3;
+      const qv = 0.5 + Math.sin(t*0.28)*0.2;
+      const qx = padX + qu*pw, qy = padY + qv*ph;
+
+      // map pts to pixel coords, score by distance + filter
+      const mapped = vecPts.map(p => {
+        const x = padX + p.u*pw, y = padY + p.v*ph;
+        const inBand = y >= bandY0 && y <= bandY1;
+        const d = Math.hypot(x - qx, y - qy);
+        return { ...p, x, y, d, inBand };
+      });
+      // top-k among filtered
+      const k = 6;
+      const topK = mapped.filter(p => p.inBand).sort((a,b) => a.d - b.d).slice(0, k);
+      const topSet = new Set(topK);
+
+      // draw all points
+      mapped.forEach(p => {
+        if (topSet.has(p)){
+          ctx.fillStyle = AMBER+'0.95)';
+          ctx.beginPath(); ctx.arc(p.x, p.y, 3, 0, Math.PI*2); ctx.fill();
+          return;
+        }
+        if (!p.inBand){
+          ctx.fillStyle = FG+'0.12)';
+          ctx.beginPath(); ctx.arc(p.x, p.y, 1.4, 0, Math.PI*2); ctx.fill();
+        } else {
+          ctx.fillStyle = FG+'0.45)';
+          ctx.beginPath(); ctx.arc(p.x, p.y, 1.8, 0, Math.PI*2); ctx.fill();
+        }
+      });
+
+      // connect query → top-k
+      topK.forEach((p,i) => {
+        const alpha = 0.7 - i*0.08;
+        ctx.strokeStyle = AMBER + alpha.toFixed(2) + ')';
+        ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(qx, qy); ctx.lineTo(p.x, p.y); ctx.stroke();
+      });
+
+      // query point with expanding ring
+      const pulse = (Math.sin(t*2.4)+1)/2;
+      ctx.strokeStyle = AMBER + (0.5 - pulse*0.35).toFixed(2) + ')';
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.arc(qx, qy, 10 + pulse*22, 0, Math.PI*2); ctx.stroke();
+      ctx.fillStyle = AMBER+'1)';
+      ctx.beginPath(); ctx.arc(qx, qy, 3.5, 0, Math.PI*2); ctx.fill();
+      // crosshair
+      ctx.strokeStyle = AMBER+'0.8)';
+      ctx.beginPath();
+      ctx.moveTo(qx-7, qy); ctx.lineTo(qx-4, qy);
+      ctx.moveTo(qx+4, qy); ctx.lineTo(qx+7, qy);
+      ctx.moveTo(qx, qy-7); ctx.lineTo(qx, qy-4);
+      ctx.moveTo(qx, qy+4); ctx.lineTo(qx, qy+7);
+      ctx.stroke();
+
+      // caption
+      ctx.fillStyle = FG+'0.35)';
+      ctx.font = '9px "Geist Mono", monospace';
+      ctx.fillText(`k=${k} · hybrid · filter`, padX + pw - 108, padY + ph + 14);
     }
 
-    const drawers = { radar:drawRadar, arm:drawArm, slam:drawSlam, wave:drawWave, sim:drawSim, board:drawBoard };
+    const drawers = { radar:drawRadar, slam:drawSlam, wave:drawWave, facade:drawFacade, rag:drawRag, vector:drawVector };
 
     function loop(){
       if (!running) return;
