@@ -112,7 +112,7 @@ button{font:inherit}
   display:flex; align-items:center; gap:.6rem;
   font-family:var(--font-mono); font-weight:500; font-size:.78rem; letter-spacing:.08em;
 }
-.mark-glyph{ width:22px; height:22px; color:var(--fg); flex-shrink:0;}
+.mark-glyph{ width:22px; height:22px; color:var(--fg); flex-shrink:0; object-fit:contain;}
 .mark-label{ color:var(--fg);}
 .nav-links{
   display:flex; gap:1.8rem;
@@ -370,6 +370,12 @@ button{font:inherit}
   position:relative; aspect-ratio: 4/5;
   border:1px solid var(--line-2); overflow:hidden;
   background: var(--bg);
+}
+.portrait-img{
+  position:absolute; inset:0;
+  width:100%; height:100%;
+  object-fit:cover; object-position:center;
+  filter: grayscale(.15) contrast(1.02);
 }
 .placeholder-stripe{
   position:absolute; inset:0;
@@ -777,10 +783,7 @@ button{font:inherit}
 <header class="nav">
   <div class="nav-inner">
     <a href="#top" class="mark" aria-label="Home">
-      <svg viewBox="0 0 24 24" class="mark-glyph" aria-hidden="true">
-        <rect x="2" y="2" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.2"/>
-        <path d="M7 18 V7 h6 a3 3 0 0 1 0 6 H7 M13 13 l5 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="square"/>
-      </svg>
+      <img src="logo-mark.png" alt="" class="mark-glyph" />
       <span class="mark-label">RAMIN&nbsp;ARIANA</span>
     </a>
 
@@ -913,12 +916,9 @@ button{font:inherit}
         <span>FILE · 001</span>
         <span class="card-dot"></span>
       </div>
-      <div class="card-portrait" aria-label="Portrait placeholder">
-        <div class="placeholder-stripe"></div>
-        <div class="portrait-label">// portrait.jpg · 4:5 · drop replacement here</div>
-        <div class="portrait-crosshair">
-          <span></span><span></span><span></span><span></span>
-        </div>
+      <div class="card-portrait">
+        <img src="Profile.JPG" alt="Ramin Ariana" class="portrait-img" />
+        <div class="portrait-label">// portrait.jpg · 4:5</div>
       </div>
       <dl class="card-kv">
         <div><dt>Role</dt><dd>Robotics / AI Engineer</dd></div>
