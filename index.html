@@ -171,7 +171,7 @@ button{font:inherit}
   position:fixed;
   inset:0;
   width:100vw; height:100vh;
-  z-index:-1; opacity:.42;
+  z-index:-1; opacity:.6;
   pointer-events:none;
 }
 .hero-canvas{
@@ -1582,10 +1582,10 @@ button{font:inherit}
     let bw=0, bh=0, bdpr;
     let bpts = [];
     const seedBpts = () => {
-      bpts = Array.from({length: 120}, () => ({
+      bpts = Array.from({length: 200}, () => ({
         x: Math.random()*bw, y: Math.random()*bh,
-        vx: (Math.random()-.5)*.85, vy: (Math.random()-.5)*.85,
-        r: Math.random()*1.2 + .3
+        vx: (Math.random()-.5)*1.3, vy: (Math.random()-.5)*1.3,
+        r: Math.random()*1.3 + .4
       }));
     };
     const bresize = () => {
@@ -1612,34 +1612,72 @@ button{font:inherit}
 
     let bgRunning = false, bgLast = 0;
     const BG_FRAME_MS = 1000/30;
-    const LINK_D2 = 140*140;
+    const LINK_D = 160;
+    const LINK_D2 = LINK_D*LINK_D;
+    // spatial hash keeps connection check near O(n) regardless of point count
+    const checkPair = (a, b) => {
+      const dx = a.x - b.x, dy = a.y - b.y;
+      const d2 = dx*dx + dy*dy;
+      if (d2 >= LINK_D2) return;
+      const alpha = (1 - Math.sqrt(d2)/LINK_D) * 0.16;
+      bctx.strokeStyle = `rgba(245,245,244,${alpha.toFixed(3)})`;
+      bctx.beginPath();
+      bctx.moveTo(a.x, a.y);
+      bctx.lineTo(b.x, b.y);
+      bctx.stroke();
+    };
     const bgLoop = (now) => {
       if (!bgRunning) return;
       requestAnimationFrame(bgLoop);
       if (now - bgLast < BG_FRAME_MS) return;
       bgLast = now;
       bctx.clearRect(0,0,bw,bh);
-      bpts.forEach(p => {
+
+      // update positions + bin into grid cells
+      const cols = Math.max(1, Math.ceil(bw/LINK_D));
+      const rows = Math.max(1, Math.ceil(bh/LINK_D));
+      const grid = new Array(cols*rows);
+      for (let i=0;i<grid.length;i++) grid[i] = null;
+      for (let k=0;k<bpts.length;k++){
+        const p = bpts[k];
         p.x += p.vx; p.y += p.vy;
         if (p.x<0||p.x>bw) p.vx*=-1;
         if (p.y<0||p.y>bh) p.vy*=-1;
+        const cx = Math.min(cols-1, Math.max(0, Math.floor(p.x/LINK_D)));
+        const cy = Math.min(rows-1, Math.max(0, Math.floor(p.y/LINK_D)));
+        const idx = cy*cols + cx;
+        if (!grid[idx]) grid[idx] = [];
+        grid[idx].push(p);
+      }
+
+      // draw points in one fill pass
+      bctx.fillStyle = 'rgba(245,245,244,0.55)';
+      for (let k=0;k<bpts.length;k++){
+        const p = bpts[k];
         bctx.beginPath();
-        bctx.arc(p.x,p.y,p.r,0,Math.PI*2);
-        bctx.fillStyle = 'rgba(245,245,244,0.35)';
+        bctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
         bctx.fill();
-      });
-      for (let i=0;i<bpts.length;i++){
-        for (let j=i+1;j<bpts.length;j++){
-          const dx=bpts[i].x-bpts[j].x, dy=bpts[i].y-bpts[j].y;
-          const d2 = dx*dx+dy*dy;
-          if (d2 < LINK_D2){
-            const a = 1 - Math.sqrt(d2)/140;
-            bctx.strokeStyle = `rgba(245,245,244,${a*0.08})`;
-            bctx.lineWidth = 1;
-            bctx.beginPath();
-            bctx.moveTo(bpts[i].x,bpts[i].y);
-            bctx.lineTo(bpts[j].x,bpts[j].y);
-            bctx.stroke();
+      }
+
+      // connections: each cell pairs with self + 4 "forward" neighbors
+      // (right, down-left, down, down-right) so every pair is visited once
+      bctx.lineWidth = 1;
+      const NEIGH = [[1,0],[-1,1],[0,1],[1,1]];
+      for (let cy=0;cy<rows;cy++){
+        for (let cx=0;cx<cols;cx++){
+          const cell = grid[cy*cols+cx];
+          if (!cell) continue;
+          for (let i=0;i<cell.length;i++){
+            for (let j=i+1;j<cell.length;j++) checkPair(cell[i], cell[j]);
+          }
+          for (const [dx,dy] of NEIGH){
+            const nx = cx+dx, ny = cy+dy;
+            if (nx<0||nx>=cols||ny<0||ny>=rows) continue;
+            const other = grid[ny*cols+nx];
+            if (!other) continue;
+            for (let i=0;i<cell.length;i++){
+              for (let j=0;j<other.length;j++) checkPair(cell[i], other[j]);
+            }
           }
         }
       }
