@@ -168,10 +168,9 @@ button{font:inherit}
   border-bottom:1px solid var(--line);
 }
 .hero-canvas{
-  position:fixed;
+  position:absolute;
   inset:0;
-  width:100%; height:100%;
-  z-index:0; opacity:.42;
+  z-index:0; opacity:.55;
   pointer-events:none;
 }
 .hero-inner{
@@ -1535,13 +1534,13 @@ button{font:inherit}
         ctx.lineWidth = 1;
         ctx.stroke();
       }
-      // sweep arc
+      // sweep arc — glow trails BEHIND the sweep line (counter-clockwise of current angle)
       const sweep = t*2 % (Math.PI*2);
       const grd = ctx.createConicGradient ? ctx.createConicGradient(sweep, cxh, cyh) : null;
       if (grd){
-        grd.addColorStop(0, 'rgba(230,180,90,0.22)');
-        grd.addColorStop(0.08, 'rgba(230,180,90,0.0)');
-        grd.addColorStop(1, 'rgba(230,180,90,0.0)');
+        grd.addColorStop(0,    'rgba(230,180,90,0)');
+        grd.addColorStop(0.88, 'rgba(230,180,90,0)');
+        grd.addColorStop(1,    'rgba(230,180,90,0.28)');
         ctx.fillStyle = grd;
         ctx.beginPath(); ctx.arc(cxh,cyh, maxR, 0, Math.PI*2); ctx.fill();
       }
