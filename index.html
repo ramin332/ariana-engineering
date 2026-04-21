@@ -193,10 +193,10 @@ button{font:inherit}
   border:0 solid var(--accent);
   pointer-events:none;
 }
-.hero-corner.tl{ top:76px; left:20px; border-top-width:1px; border-left-width:1px;}
-.hero-corner.tr{ top:76px; right:20px; border-top-width:1px; border-right-width:1px;}
-.hero-corner.bl{ bottom:36px; left:20px; border-bottom-width:1px; border-left-width:1px;}
-.hero-corner.br{ bottom:36px; right:20px; border-bottom-width:1px; border-right-width:1px;}
+.hero-corner.hc-tl{ top:76px; left:20px; border-top-width:1px; border-left-width:1px;}
+.hero-corner.hc-tr{ top:76px; right:20px; border-top-width:1px; border-right-width:1px;}
+.hero-corner.hc-bl{ bottom:36px; left:20px; border-bottom-width:1px; border-left-width:1px;}
+.hero-corner.hc-br{ bottom:36px; right:20px; border-bottom-width:1px; border-right-width:1px;}
 @media (max-width: 900px){
   .hero-corner{ display:none; }
 }
@@ -793,12 +793,11 @@ button{font:inherit}
 </header>
 
 <!-- ================= HERO ================= -->
-   <div class="hero-corner tl" aria-hidden="true"></div>
 <section id="top" class="hero">
-
-  <div class="hero-corner tr" aria-hidden="true"></div>
-  <div class="hero-corner bl" aria-hidden="true"></div>
-  <div class="hero-corner br" aria-hidden="true"></div>
+  <div class="hero-corner hc-tl" aria-hidden="true"></div>
+  <div class="hero-corner hc-tr" aria-hidden="true"></div>
+  <div class="hero-corner hc-bl" aria-hidden="true"></div>
+  <div class="hero-corner hc-br" aria-hidden="true"></div>
 
   <div class="hero-inner">
     <div class="eyebrow">
@@ -1512,7 +1511,7 @@ button{font:inherit}
     let w = 0, h = 0, dpr;
     let pts = [];
     const seedPts = () => {
-      pts = Array.from({length: 55}, () => ({
+      pts = Array.from({length: 80}, () => ({
         x: Math.random()*w, y: Math.random()*h,
         vx: (Math.random()-.5)*.25, vy: (Math.random()-.5)*.25,
         r: Math.random()*1.2 + .3
