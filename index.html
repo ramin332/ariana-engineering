@@ -754,6 +754,22 @@ button{font:inherit}
 .sc-dots button.on{ background:var(--accent);}
 #sc-num{ color:var(--accent); font-weight:500;}
 
+/* =========================================================
+   HOUSEHUGGER CAROUSEL (image + video, both contained)
+   ========================================================= */
+.hh-carousel .hh-stage{
+  position:absolute; inset:0; z-index:1;
+  background:#000;
+}
+.hh-carousel .hh-stage > *{
+  position:absolute; inset:0; width:100%; height:100%;
+  opacity:0;
+  transition: opacity .45s ease;
+}
+.hh-carousel .hh-stage > video{ object-fit:contain;}
+.hh-carousel .hh-stage > .active{ opacity:1;}
+.hh-carousel::after{ opacity:.25 !important;}
+
 </style>
 </head>
 <body>
@@ -1142,23 +1158,25 @@ button{font:inherit}
   <!-- PROJECT 06 -->
   <article class="project reverse" data-proj="06">
     <div class="project-media">
-      <div class="media-frame" data-media="vector">
-        <video
-          class="proj-video"
-          data-video="househugger"
-          muted
-          loop
-          playsinline
-          preload="metadata"
-        >
-          <source src="media/06-househugger-swipe.webm" type="video/webm">
-        </video>
-        <canvas class="proj-canvas" data-canvas="vector"></canvas>
+      <div class="media-frame hh-carousel" id="hh-carousel" data-media="vector">
+        <div class="hh-stage" id="hh-stage">
+          <video muted playsinline preload="metadata">
+            <source src="media/06-househugger-map.webm" type="video/webm">
+          </video>
+          <video muted playsinline preload="metadata">
+            <source src="media/06-househugger-swipe.webm" type="video/webm">
+          </video>
+        </div>
         <div class="media-hud">
           <span>APP · 06</span>
-          <span>QDRANT</span>
+          <span id="hh-label">MAP</span>
         </div>
-        <div class="media-caption">// househugger.nl · listing swipe</div>
+        <div class="sc-controls">
+          <button class="sc-btn" id="hh-prev" aria-label="Previous slide">‹</button>
+          <div class="sc-dots" id="hh-dots"></div>
+          <button class="sc-btn" id="hh-next" aria-label="Next slide">›</button>
+        </div>
+        <div class="media-caption">// househugger.nl</div>
       </div>
     </div>
     <div class="project-body">
@@ -1169,17 +1187,18 @@ button{font:inherit}
       </div>
       <h3 class="proj-title" data-scramble="Househugger · Hybrid Vector Search">Househugger · Hybrid Vector Search</h3>
       <p class="proj-desc">
-        AI-driven housing search for Amsterdam — swipe through
-        listings and filter by travel time. Hybrid search engine
-        mixing structured filters with dense + sparse embeddings on
-        Qdrant, preference learning via recommendation &amp; discovery,
-        scraping pipelines, and automated content workflows in n8n.
+        AI-driven housing search across the Netherlands — swipe through
+        listings and filter by travel time. Hybrid search on Qdrant
+        combines structured filters with dense + sparse embeddings,
+        fused via Reciprocal Rank Fusion. Preference learning
+        adapts rankings from swipe signals; scraping pipelines and
+        automated content workflows run in n8n.
       </p>
       <ul class="proj-tags">
-        <li>SvelteKit</li><li>PostgreSQL</li><li>PostgresML</li><li>Qdrant</li><li>n8n</li><li>Web scraping</li>
+        <li>SvelteKit</li><li>PostgreSQL</li><li>PostgresML</li><li>Qdrant</li><li>Hybrid search</li><li>RRF</li><li>n8n</li>
       </ul>
       <div class="proj-actions">
-        <a class="link-arrow" href="#">Visit site <span>→</span></a>
+        <a class="link-arrow" href="https://househugger.nl" target="_blank" rel="noopener">househugger.nl <span>→</span></a>
         <a class="link-arrow muted" href="#">Deep-dive</a>
       </div>
     </div>
@@ -2141,6 +2160,83 @@ button{font:inherit}
     resize();
     if (w && h){ running = true; (drawers[kind] || drawRadar)(); running = false; }
   });
+
+  /* ---------- HOUSEHUGGER CAROUSEL (image → video) ---------- */
+  (function(){
+    const stage = document.getElementById('hh-stage');
+    if (!stage) return;
+    const slides = Array.from(stage.children);
+    const dots = document.getElementById('hh-dots');
+    const label = document.getElementById('hh-label');
+    const labels = ['MAP', 'SWIPE'];
+    const IMG_MS = 5000;
+
+    slides.forEach((_, i) => {
+      const b = document.createElement('button');
+      b.setAttribute('aria-label', `Slide ${i+1}`);
+      b.addEventListener('click', () => go(i));
+      dots.appendChild(b);
+    });
+
+    let idx = 0;
+    let visible = false;
+    let imgTimer = null;
+    const clearImgTimer = () => { if (imgTimer) { clearTimeout(imgTimer); imgTimer = null; } };
+
+    function go(i){
+      clearImgTimer();
+      idx = (i + slides.length) % slides.length;
+      slides.forEach((el, k) => {
+        if (k === idx){
+          el.classList.add('active');
+          if (el.tagName === 'VIDEO'){
+            if (visible) el.play().catch(() => {});
+          } else if (visible){
+            imgTimer = setTimeout(() => go(idx + 1), IMG_MS);
+          }
+        } else {
+          el.classList.remove('active');
+          if (el.tagName === 'VIDEO'){
+            el.pause();
+            try { el.currentTime = 0; } catch(e){}
+          }
+        }
+      });
+      dots.querySelectorAll('button').forEach((b, k) => b.classList.toggle('on', k === idx));
+      if (label) label.textContent = labels[idx] || '';
+    }
+
+    slides.forEach((el, i) => {
+      if (el.tagName === 'VIDEO'){
+        el.addEventListener('ended', () => { if (i === idx) go(idx + 1); });
+      }
+    });
+    document.getElementById('hh-prev').addEventListener('click', () => go(idx - 1));
+    document.getElementById('hh-next').addEventListener('click', () => go(idx + 1));
+    go(0);
+
+    const carousel = document.getElementById('hh-carousel');
+    if (carousel && 'IntersectionObserver' in window){
+      const io = new IntersectionObserver(es => {
+        es.forEach(e => {
+          visible = e.isIntersecting;
+          const cur = slides[idx];
+          if (!cur) return;
+          if (visible){
+            if (cur.tagName === 'VIDEO') cur.play().catch(() => {});
+            else { clearImgTimer(); imgTimer = setTimeout(() => go(idx + 1), IMG_MS); }
+          } else {
+            clearImgTimer();
+            if (cur.tagName === 'VIDEO') cur.pause();
+          }
+        });
+      }, { threshold: 0.25 });
+      io.observe(carousel);
+    } else {
+      visible = true;
+      go(0);
+    }
+  })();
 
   /* ---------- SUPERCROP CAROUSEL ---------- */
   (function(){
