@@ -10,3 +10,4 @@ dev.sh
 .env.local
 *.log
 media/README.md
+media/_source/
