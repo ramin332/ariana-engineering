@@ -332,11 +332,19 @@ button{font:inherit}
    ABOUT
    ========================================================= */
 .about-grid{
-  display:grid; grid-template-columns: 1.3fr .8fr; gap: 4rem;
+  display:grid; grid-template-columns: 1.3fr .8fr;
+  grid-template-rows: auto 1fr;
+  column-gap: 4rem; row-gap: 0;
   align-items:stretch;
 }
+.about-head{ grid-column:1; grid-row:1; }
+.about-copy{ grid-column:1; grid-row:2; }
+.about-card{ grid-column:2; grid-row: 1 / span 2; }
 @media (max-width:900px){
-  .about-grid{ grid-template-columns: 1fr; gap:3rem;}
+  .about-grid{ grid-template-columns: 1fr; grid-template-rows: auto auto auto; column-gap:0; row-gap:3rem;}
+  .about-head{ grid-column:1; grid-row:1; }
+  .about-copy{ grid-column:1; grid-row:2; }
+  .about-card{ grid-column:1; grid-row:3; }
 }
 .about-copy .lede{
   font-family:var(--font-serif); font-weight:300;
@@ -365,13 +373,10 @@ button{font:inherit}
   font-family:var(--font-mono); font-size:.7rem; letter-spacing:.1em;
   color:var(--fg-mute); margin-bottom:1rem;
 }
-.card-dot{
-  width:6px; height:6px; border-radius:50%; background:var(--accent);
-  box-shadow:0 0 8px var(--accent);
-}
+
 .card-portrait{
   position:relative;
-  flex: 1 1 auto; min-height: 0;
+  flex: 1 1 auto; min-height: 420px;
   margin-top: 1.2rem;
   border:1px solid var(--line-2); overflow:hidden;
   background: var(--bg);
@@ -871,14 +876,13 @@ button{font:inherit}
 
 <!-- ================= ABOUT ================= -->
 <section id="about" class="about section">
-  <div class="section-head">
-    <span class="section-idx">01</span>
-    <span class="section-kicker">ABOUT</span>
-    <span class="section-rule"></span>
-    <span class="section-meta">/ operator profile</span>
-  </div>
-
   <div class="about-grid">
+    <div class="section-head about-head">
+      <span class="section-idx">01</span>
+      <span class="section-kicker">ABOUT</span>
+      <span class="section-rule"></span>
+      <span class="section-meta">/ operator profile</span>
+    </div>
     <div class="about-copy">
       <p class="lede">
         I build systems that have to <em>work the first time</em>, in
@@ -886,23 +890,21 @@ button{font:inherit}
       </p>
       <p>
         I'm a full-stack engineer with a robotics backbone. At
-        <strong>Avalor AI</strong> I led the first UAV–UGV teaming
+        <strong>Intelic (formerly known as Avalor AI)</strong> I led the first UAV–UGV teaming
         project — integrating a Milrem UGV and Holybro UAV into the
         Nexus control platform, and adding LiDAR SLAM to the air
         vehicles so they could navigate without GPS.
       </p>
       <p>
         Before that I deployed warehouse-robotics fleets across
-        Europe for <strong>Exotec</strong> (Decathlon, Lyreco),
+        Europe for <strong>Exotec</strong> (Decathlon, Napoli),
         wrote a multi-target swarm algorithm for my MSc. thesis at
-        <strong>TU Delft</strong>, and co-founded <strong>Househugger</strong>,
-        an AI housing-search platform with a hybrid vector search engine.
+        <strong>TU Delft</strong>.
       </p>
       <p>
-        Today I'm at <strong>Supercrop</strong>, building a LangGraph
-        RAG stack for agronomy. I like problems with real physics
-        and real users — and I ship the boring parts too: SQL KPIs,
-        scrapers, Docker, on-call.
+        Today I'm Co-Founder of <strong>Supercrop</strong>, building a LangGraph
+        RAG stack and ai-native farm management software. I like problems with real physics
+        and real users — and I ship the boring parts too: KPIs, CI-CD, tests.
       </p>
       <p class="about-sign">
         <span class="sig-line"></span>
@@ -911,12 +913,8 @@ button{font:inherit}
     </div>
 
     <aside class="about-card">
-      <div class="card-head">
-        <span>FILE · 001</span>
-        <span class="card-dot"></span>
-      </div>
       <div class="card-portrait">
-        <img src="media/portrait.jpg" alt="Ramin Ariana" class="portrait-img" />
+        <img src="media/20260318-adami-office-shoot-7.jpg" alt="Ramin Ariana" class="portrait-img" />
       </div>
       <dl class="card-kv">
         <div><dt>Role</dt><dd>Robotics / AI Engineer</dd></div>
@@ -942,23 +940,23 @@ button{font:inherit}
   <article class="project" data-proj="01">
     <div class="project-media">
       <div class="media-frame" data-media="radar">
-        <!-- TODO: drop MP4 at media/01-dart.mp4, then uncomment the <source> tag below. Video will fade in over the canvas when loaded. -->
         <video
           class="proj-video"
           data-video="dart"
           muted
           loop
           playsinline
-          preload="metadata"
+          autoplay
+          preload="auto"
+          poster="https://framerusercontent.com/images/8yApVoeKoAoMw2f1jpugQ2HN8.webp?width=1715&amp;height=1061"
         >
-          <!-- <source src="media/01-dart.mp4" type="video/mp4"> -->
+          <source src="https://framerusercontent.com/assets/A233FfHl51hqpAgv4WLwa5ClR2E.mp4" type="video/mp4">
         </video>
         <canvas class="proj-canvas" data-canvas="radar"></canvas>
         <div class="media-hud">
           <span>DEMO · 01</span>
           <span class="rec"><i></i>LIVE</span>
         </div>
-        <div class="media-caption">// awaiting media/01-dart.mp4</div>
       </div>
     </div>
     <div class="project-body">
@@ -967,12 +965,16 @@ button{font:inherit}
         <span>2024 — 2025</span>
         <span>AVALOR AI · DEFENSE</span>
       </div>
-      <h3 class="proj-title" data-scramble="Project DART · UAV–UGV Teaming">Project DART · UAV–UGV Teaming</h3>
+      <h3 class="proj-title" data-scramble="Project DART / ARX · UAV–UGV Teaming">Project DART / ARX · UAV–UGV Teaming</h3>
       <p class="proj-desc">
-        Led the first UAV–UGV teaming project at Avalor AI (Project
-        DART). A heterogeneous system pairing a Milrem UGV (ROS 1)
-        with a Holybro UAV (Jetson, MAVLink, ArduPilot), integrated
-        into the Nexus control platform. Long-range autonomous
+        Led the first UAV–UGV teaming work at Avalor AI across two
+        platforms: <a href="https://milremrobotics.com/themis-family/" target="_blank" rel="noopener">Milrem's THeMIS</a>,
+        the combat-proven tracked UGV already fielded by NATO members
+        for logistics and ISR, and <a href="https://www.arx-robotics.com/" target="_blank" rel="noopener">ARX
+        Robotics' Gereon</a>, a modular European UGV built for scalable
+        defense autonomy. Both run ROS 1 on the vehicle side and were
+        paired with a Holybro UAV (Jetson, MAVLink, ArduPilot), all
+        fused into the Nexus control platform. Long-range autonomous
         missions where the ground vehicle carries, deploys and
         recovers the aerial scout.
       </p>
@@ -981,7 +983,6 @@ button{font:inherit}
       </ul>
       <div class="proj-actions">
         <a class="link-arrow" href="https://www.linkedin.com/feed/update/urn:li:ugcPost:7402369736837328896/" target="_blank" rel="noopener">Watch demo <span>→</span></a>
-        <a class="link-arrow muted" href="#">Write-up</a>
       </div>
     </div>
   </article>
@@ -1017,8 +1018,12 @@ button{font:inherit}
       <h3 class="proj-title" data-scramble="GNSS-denied Navigation · VIO + VPS">GNSS-denied Navigation · VIO + VPS</h3>
       <p class="proj-desc">
         A C++ module for visual navigation on a self-built drone,
-        combining Spectacular AI's Visual-Inertial Odometry with
-        Visual Positioning against a prior map. The drone flies
+        combining <a href="https://www.spectacularai.com/gps-free" target="_blank" rel="noopener">Spectacular AI's</a>
+        Visual-Inertial Odometry with Visual Positioning against a
+        prior map. We were one of their first integration partners for
+        VIO + VPS — their hardware module (a 1 MP camera coupled to an
+        IMU compute stack) had to be brought onto our airframe and
+        wired into the flight stack end-to-end. The drone flies
         without GNSS and stays localised when satellite signals are
         jammed, spoofed or simply absent indoors.
       </p>
@@ -1027,7 +1032,6 @@ button{font:inherit}
       </ul>
       <div class="proj-actions">
         <a class="link-arrow" href="https://www.spectacularai.com/gps-free" target="_blank" rel="noopener">Spectacular AI · GPS-free <span>→</span></a>
-        <a class="link-arrow muted" href="#">Flight log</a>
       </div>
     </div>
   </article>
@@ -1036,20 +1040,23 @@ button{font:inherit}
   <article class="project" data-proj="03">
     <div class="project-media">
       <div class="media-frame" data-media="facade">
-        <img
-          class="proj-img"
-          data-img="aeroscan"
-          src="media/03-aeroscan-planner.jpg"
-          alt="AeroScan flight planner: 3D building model with perpendicular facade-inspection waypoints"
-          loading="lazy"
-          decoding="async"
-        />
+        <video
+          class="proj-video"
+          data-video="aeroscan"
+          muted
+          loop
+          playsinline
+          autoplay
+          preload="auto"
+          poster="media/03-aeroscan-planner.jpg"
+        >
+          <source src="media/03-aeroscan.mp4" type="video/mp4">
+        </video>
         <canvas class="proj-canvas" data-canvas="facade"></canvas>
         <div class="media-hud">
           <span>SCAN · 03</span>
           <span>NEN-2767</span>
         </div>
-        <div class="media-caption">// AeroScan flight planner · KMZ per facade</div>
       </div>
     </div>
     <div class="project-body">
@@ -1060,14 +1067,13 @@ button{font:inherit}
       </div>
       <h3 class="proj-title" data-scramble="AeroScan · NEN-2767 Facade Inspection">AeroScan · NEN-2767 Facade Inspection</h3>
       <p class="proj-desc">
-        A PSDK integration for the DJI Matrice 4E + Manifold 3 that turns
-        Smart 3D Explore output into NEN-2767-compliant inspection flights.
-        A custom .dpk app segments facades from the rough 3D model, computes
-        surface normals and emits a perpendicular-sweep KMZ with
-        GSD-controlled waypoints. The Orin NX monitors every capture in
-        real time — blur, perpendicularity and GSD checks trigger retakes
-        or a switch to the 168 mm telephoto for defect close-ups. Two taps,
-        no laptop in the field.
+        Autonomous flight-path planning software built on the DJI PSDK
+        for the Matrice 4E + Manifold 3. It ingests the rough 3D model
+        from Smart 3D Explore, segments each facade, computes surface
+        normals and emits a NEN-2767-compliant KMZ of parallel-to-facade
+        sweeps with GSD-controlled waypoints — so the drone flies the
+        building face by face, at a fixed stand-off, without a laptop
+        in the field.
       </p>
       <ul class="proj-tags">
         <li>DJI PSDK V3</li><li>Manifold 3</li><li>Orin NX</li><li>RANSAC</li><li>KMZ</li><li>NEN-2767</li><li>C++</li>
@@ -1087,7 +1093,7 @@ button{font:inherit}
           <span>ESG · 04</span>
           <span>RAG</span>
         </div>
-        <div class="media-caption">// alphaplan ESG demo media — to be added</div>
+        <div class="media-caption"></div>
       </div>
     </div>
     <div class="project-body">
@@ -1137,16 +1143,26 @@ button{font:inherit}
         <span>2025 — now</span>
         <span>SUPERCROP · FULL-STACK</span>
       </div>
-      <h3 class="proj-title" data-scramble="Agronomy RAG with Long-term Memory">Agronomy RAG with Long-term Memory</h3>
+      <h3 class="proj-title" data-scramble="Supercrop · Sap-driven Farm Management">Supercrop · Sap-driven Farm Management</h3>
       <p class="proj-desc">
-        Supercrop is a SaaS platform for soil and crop health, giving
-        growers data-driven guidance on fertiliser and pesticide use.
-        I implemented the RAG stack over a mixed knowledge base of
-        books, podcasts and video, and used LangGraph to architect
-        long-term memory across sessions.
+        Co-founder and full-stack engineer on <a href="https://supercrop.ag" target="_blank" rel="noopener">Supercrop</a>,
+        a farm-management platform built around sap analysis.
+        Growers test the sap of a live crop, Supercrop reads the
+        nutrient gaps against the field's target profile and emits a
+        ready-to-spray tank mix — "measure exactly what your crop
+        needs, then spray the right nutrients, at the right time."
+        Around that core the platform adds multi-year crop-rotation
+        planning, per-field profitability (cost / revenue / net),
+        inventory tracking, a mobile app for field logging and a
+        post-season analyser that surfaces over-application,
+        deficiencies and timing errors. On the AI side I built the
+        test-interpretation pipeline: a LangGraph agent with long-term
+        memory across sessions, backed by a RAG stack over soil, water,
+        manure and biology test reports plus a curated agronomy corpus
+        of books, podcasts and video.
       </p>
       <ul class="proj-tags">
-        <li>React</li><li>Supabase</li><li>LangGraph</li><li>RAG</li><li>Pinecone</li>
+        <li>React</li><li>Supabase</li><li>LangGraph</li><li>RAG</li><li>Pinecone</li><li>Mobile</li><li>Agronomy</li>
       </ul>
       <div class="proj-actions">
         <a class="link-arrow" href="https://supercrop.ag" target="_blank" rel="noopener">supercrop.ag <span>→</span></a>
